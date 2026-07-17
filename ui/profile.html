@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile | Plotio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../config.js"></script>
+</head>
+<body class="bg-[#0b071e] text-white min-h-screen p-6 pb-24">
+
+    <!-- Profile Header -->
+    <div class="bg-black/40 backdrop-blur-xl border border-white/10 p-6 rounded-3xl mb-6">
+        <div class="flex items-center gap-4 mb-4">
+            <div class="w-20 h-20 rounded-full bg-slate-800 border-2 border-pink-500 overflow-hidden">
+                <img id="avatar" src="https://via.placeholder.com/150" class="w-full h-full object-cover">
+            </div>
+            <div>
+                <h2 id="username" class="text-2xl font-bold">Loading...</h2>
+                <p id="handle" class="text-pink-500">@username</p>
+            </div>
+            <button id="followBtn" class="ml-auto px-6 py-2 bg-orange-500 rounded-full font-bold text-sm hidden">Follow</button>
+        </div>
+        <p id="bio" class="text-slate-400 text-sm mb-4">Loading bio...</p>
+        
+        <div class="flex gap-6 border-t border-white/10 pt-4">
+            <div>
+                <span id="followingCount" class="font-bold">0</span>
+                <p class="text-xs text-slate-500">Following</p>
+            </div>
+            <div>
+                <span id="followersCount" class="font-bold">0</span>
+                <p class="text-xs text-slate-500">Followers</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Menu List -->
+    <div class="bg-black/40 border border-white/10 rounded-3xl p-2">
+        <div class="p-4 border-b border-white/5 flex justify-between"><span>Recent Play</span> <span>></span></div>
+        <div class="p-4 border-b border-white/5 flex justify-between"><span>Following</span> <span>></span></div>
+        <div class="p-4 border-b border-white/5 flex justify-between"><span>Followers</span> <span>></span></div>
+        <div class="p-4 flex justify-between cursor-pointer" onclick="window.location.href='settings.html'"><span>Profile Settings</span> <span>></span></div>
+    </div>
+
+    <button onclick="logout()" class="w-full mt-6 py-4 border border-red-500/30 text-red-500 rounded-2xl font-bold">SIGN OUT ACCOUNT</button>
+
+    <!-- Bottom Navigation Bar -->
+    <div class="fixed bottom-0 left-0 w-full bg-black/80 backdrop-blur-lg border-t border-white/10 p-4 flex justify-around">
+        <button onclick="window.location.href='explore.html'" class="text-slate-500">Explore</button>
+        <button onclick="window.location.href='projects.html'" class="text-slate-500">Project</button>
+        <button onclick="window.location.href='create.html'" class="text-slate-500">Create</button>
+        <button onclick="window.location.href='profile.html'" class="text-pink-500 font-bold">Profile</button>
+    </div>
+
+    <script>
+        const supabaseClient = supabase.createClient(window.SUPABASE_CONFIG.URL, window.SUPABASE_CONFIG.ANON_KEY);
+        
+        async function logout() {
+            await supabaseClient.auth.signOut();
+            window.location.href = '/auth/auth.html';
+        }
+    </script>
+</body>
+</html>
