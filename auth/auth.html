@@ -9,43 +9,25 @@
     <script src="../config.js"></script>
 </head>
 <body class="bg-[#0b071e] text-white flex items-center justify-center min-h-screen p-6">
-
     <div class="bg-black/40 backdrop-blur-xl border border-white/10 p-8 rounded-3xl w-full max-w-sm shadow-2xl space-y-6">
         <h2 id="title" class="text-3xl font-black text-center">Sign In</h2>
-        <input type="email" id="email" placeholder="Email" class="w-full bg-slate-900/50 border border-white/10 p-4 rounded-xl">
-        <input type="password" id="password" placeholder="Password" class="w-full bg-slate-900/50 border border-white/10 p-4 rounded-xl">
+        <input type="email" id="email" placeholder="Email" class="w-full bg-slate-900 border border-white/10 p-4 rounded-xl">
+        <input type="password" id="password" placeholder="Password" class="w-full bg-slate-900 border border-white/10 p-4 rounded-xl">
         <button id="mainBtn" onclick="handleAuth()" class="w-full bg-pink-600 py-4 rounded-xl font-bold">Sign In</button>
-        <p class="text-sm text-center text-slate-400">
-            <span id="toggleText">Don't have an account?</span> 
-            <button onclick="toggleMode()" class="text-pink-500 font-bold hover:underline">Register</button>
-        </p>
     </div>
-
     <script>
         const supabase = supabase.createClient(window.SUPABASE_CONFIG.URL, window.SUPABASE_CONFIG.ANON_KEY);
-        let isLogin = true;
-
-        function toggleMode() {
-            isLogin = !isLogin;
-            document.getElementById('title').innerText = isLogin ? "Sign In" : "Register";
-            document.getElementById('mainBtn').innerText = isLogin ? "Sign In" : "Register";
-            document.getElementById('toggleText').innerText = isLogin ? "Don't have an account?" : "Already have an account?";
-        }
-
         async function handleAuth() {
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
-            try {
-                if (isLogin) {
-                    const { error } = await supabase.auth.signInWithPassword({ email, password });
-                    if (error) throw error;
-                    window.location.href = '../ui/dashboard.html';
-                } else {
-                    const { error } = await supabase.auth.signUp({ email, password });
-                    if (error) throw error;
-                    alert("Check email buat verifikasi!");
-                }
-            } catch (err) { alert(err.message); }
+            
+            const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+            
+            if (error) {
+                alert("Gagal Login: " + error.message);
+            } else {
+                window.location.href = '/ui/dashboard.html';
+            }
         }
     </script>
 </body>
