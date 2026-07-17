@@ -12,14 +12,9 @@
 
     <div class="bg-black/40 backdrop-blur-xl border border-white/10 p-8 rounded-3xl w-full max-w-sm shadow-2xl space-y-6">
         <h2 id="title" class="text-3xl font-black text-center">Sign In</h2>
-        
-        <input type="email" id="email" placeholder="Email Address" class="w-full bg-slate-900/50 border border-white/10 p-4 rounded-xl focus:border-pink-500 outline-none">
-        <input type="password" id="password" placeholder="Password" class="w-full bg-slate-900/50 border border-white/10 p-4 rounded-xl focus:border-pink-500 outline-none">
-        
-        <button id="mainBtn" onclick="handleAuth()" class="w-full bg-pink-600 hover:bg-pink-500 py-4 rounded-xl font-bold transition-all">
-            Sign In
-        </button>
-
+        <input type="email" id="email" placeholder="Email" class="w-full bg-slate-900/50 border border-white/10 p-4 rounded-xl">
+        <input type="password" id="password" placeholder="Password" class="w-full bg-slate-900/50 border border-white/10 p-4 rounded-xl">
+        <button id="mainBtn" onclick="handleAuth()" class="w-full bg-pink-600 py-4 rounded-xl font-bold">Sign In</button>
         <p class="text-sm text-center text-slate-400">
             <span id="toggleText">Don't have an account?</span> 
             <button onclick="toggleMode()" class="text-pink-500 font-bold hover:underline">Register</button>
@@ -40,14 +35,17 @@
         async function handleAuth() {
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
-            
-            if (isLogin) {
-                const { error } = await supabase.auth.signInWithPassword({ email, password });
-                if (error) alert(error.message); else window.location.href = '../ui/dashboard.html';
-            } else {
-                const { error } = await supabase.auth.signUp({ email, password });
-                if (error) alert(error.message); else alert("Check your email for confirmation!");
-            }
+            try {
+                if (isLogin) {
+                    const { error } = await supabase.auth.signInWithPassword({ email, password });
+                    if (error) throw error;
+                    window.location.href = '../ui/dashboard.html';
+                } else {
+                    const { error } = await supabase.auth.signUp({ email, password });
+                    if (error) throw error;
+                    alert("Check email buat verifikasi!");
+                }
+            } catch (err) { alert(err.message); }
         }
     </script>
 </body>
