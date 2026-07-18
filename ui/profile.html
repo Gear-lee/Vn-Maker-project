@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile | Plotio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../config.js"></script>
+</head>
+<body class="bg-[#0b071e] text-white min-h-screen p-6 pb-24">
+
+    <!-- Profile Header -->
+    <div class="bg-black/40 backdrop-blur-xl border border-white/10 p-6 rounded-3xl mb-6">
+        <div class="flex items-start gap-4 mb-5">
+            <div class="w-20 h-20 rounded-full bg-slate-800 border-2 border-pink-500 overflow-hidden flex-shrink-0 relative">
+                <img id="avatar" src="https://api.dicebear.com/7.x/avataaars/svg?seed=default" class="w-full h-full object-cover">
+            </div>
+            <div class="flex-1 min-w-0">
+                <h2 id="username" class="text-2xl font-bold truncate">Loading...</h2>
+                <p id="handle" class="text-pink-500 text-sm">@username</p>
+            </div>
+            <button id="actionBtn" class="px-5 py-2 rounded-full font-bold text-sm whitespace-nowrap transition-all">
+                Loading
+            </button>
+        </div>
+        <p id="bio" class="text-slate-400 text-sm mb-5">Loading bio...</p>
+        
+        <div class="flex gap-8 border-t border-white/10 pt-4">
+            <button onclick="goToList('following')" class="text-left">
+                <span id="followingCount" class="font-bold text-lg block">0</span>
+                <p class="text-xs text-slate-500">Following</p>
+            </button>
+            <button onclick="goToList('followers')" class="text-left">
+                <span id="followersCount" class="font-bold text-lg block">0</span>
+                <p class="text-xs text-slate-500">Followers</p>
+            </button>
+        </div>
+    </div>
+
+    <!-- Menu List -->
+    <div class="bg-black/40 border border-white/10 rounded-3xl p-2">
+        <div class="p-4 border-b border-white/5 flex justify-between items-center cursor-pointer">
+            <span>Recent Play</span> <span class="text-slate-600">></span>
+        </div>
+        <div class="p-4 border-b border-white/5 flex justify-between items-center cursor-pointer" onclick="goToList('following')">
+            <span>Following</span> <span class="text-slate-600">></span>
+        </div>
+        <div class="p-4 border-b border-white/5 flex justify-between items-center cursor-pointer" onclick="goToList('followers')">
+            <span>Followers</span> <span class="text-slate-600">></span>
+        </div>
+        <div id="notifRow" class="p-4 border-b border-white/5 flex justify-between items-center cursor-pointer">
+            <span>Notifications</span> <span class="text-slate-600">></span>
+        </div>
+        <div id="settingsRow" class="p-4 flex justify-between items-center cursor-pointer" onclick="window.location.href='settings.html'">
+            <span>Profile Settings</span> <span class="text-slate-600">></span>
+        </div>
+    </div>
+
+    <button id="signOutBtn" onclick="logout()" class="w-full mt-6 py-4 border border-red-500/30 text-red-500 rounded-2xl font-bold">
+        SIGN OUT ACCOUNT
+    </button>
+
+    <script src="../navbar.js"></script>
+    <script>
+        const supabaseClient = supabase.createClient(window.SUPABASE_CONFIG.URL, window.SUPABASE_CONFIG.ANON_KEY);
+
+        let currentUser = null;   // yang lagi login
+        let targetUser = null;    // profile yang lagi dibuka (bisa sama dgn currentUser)
+        let isOwnProfile = false;
+
+        async function init() {
+            // 1. Cek siapa yang login
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (!session) {
+                window.location.href = '/auth/auth.html';
+                return;
+            }
+            currentUser = session.user;
+
+            // 2. Cek parameter URL
+            const params = new URLSearchParams(window.location.search);
+            const usernameParam = params.get('username');
+
+            if (!usernameParam) {
+                // Mode: profile sendiri
+                isOwnProfile = true;
+                const { data, error } = await supabaseClient
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', currentUser.id)
+                    .single();
+
+                if (error || !data) {
+                    alert("Profil belum ditemukan. Coba lengkapi dulu di Profile Settings.");
+                    targetUser = { id: currentUser.id, username: 'user_baru', bio: '', avatar_url: null };
+                } else {
+                    targetUser = data;
+                }
+            } else {
+                // Mode: lihat profile orang lain (atau diri sendiri via link)
+                const { data, error } = await supabaseClient
+                    .from('profiles')
+                    .select('*')
+                    .eq('username', usernameParam)
+                    .single();
+
+                if (error || !data) {
+                    alert("User tidak ditemukan.");
+                    window.location.href = '/ui/dashboard.html';
+                    return;
+                }
+                targetUser = data;
+                isOwnProfile = (targetUser.id === currentUser.id);
+            }
+
+            renderProfile();
+            loadStats();
+
+            if (isOwnProfile) {
+                setupEditButton();
+            } else {
+                await setupFollowButton();
+            }
+        }
+
+        function renderProfile() {
+            document.getElementById('username').innerText = targetUser.username || 'Tanpa Nama';
+            document.getElementById('handle').innerText = '@' + (targetUser.username || 'user');
+            document.getElementById('bio').innerText = targetUser.bio || 'Belum ada bio.';
+            document.getElementById('avatar').src = targetUser.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${targetUser.username}`;
+
+            // Sembunyiin menu & sign out kalo lagi liat profile orang lain
+            const ownOnlyIds = ['notifRow', 'settingsRow', 'signOutBtn'];
+            ownOnlyIds.forEach(id => {
+                document.getElementById(id).style.display = isOwnProfile ? 'flex' : 'none';
+            });
+        }
+
+        async function loadStats() {
+            const { count: followingCount } = await supabaseClient
+                .from('followers')
+                .select('*', { count: 'exact', head: true })
+                .eq('follower_id', targetUser.id);
+
+            const { count: followersCount } = await supabaseClient
+                .from('followers')
+                .select('*', { count: 'exact', head: true })
+                .eq('following_id', targetUser.id);
+
+            document.getElementById('followingCount').innerText = followingCount || 0;
+            document.getElementById('followersCount').innerText = followersCount || 0;
+        }
+
+        function setupEditButton() {
+            const btn = document.getElementById('actionBtn');
+            btn.innerText = 'Edit Profile';
+            btn.className = 'px-5 py-2 rounded-full font-bold text-sm whitespace-nowrap transition-all bg-white/10 text-white hover:bg-white/20';
+            btn.onclick = () => window.location.href = 'settings.html';
+        }
+
+        let isFollowing = false;
+
+        async function setupFollowButton() {
+            const { data } = await supabaseClient
+                .from('followers')
+                .select('id')
+                .eq('follower_id', currentUser.id)
+                .eq('following_id', targetUser.id)
+                .maybeSingle();
+
+            isFollowing = !!data;
+            renderFollowButton();
+
+            document.getElementById('actionBtn').onclick = toggleFollow;
+        }
+
+        function renderFollowButton() {
+            const btn = document.getElementById('actionBtn');
+            if (isFollowing) {
+                btn.innerText = 'Unfollow';
+                btn.className = 'px-5 py-2 rounded-full font-bold text-sm whitespace-nowrap transition-all bg-slate-700 text-slate-300 hover:bg-slate-600';
+            } else {
+                btn.innerText = 'Follow';
+                btn.className = 'px-5 py-2 rounded-full font-bold text-sm whitespace-nowrap transition-all bg-orange-500 text-white hover:bg-orange-400';
+            }
+        }
+
+        async function toggleFollow() {
+            const btn = document.getElementById('actionBtn');
+            btn.disabled = true;
+
+            if (isFollowing) {
+                await supabaseClient
+                    .from('followers')
+                    .delete()
+                    .eq('follower_id', currentUser.id)
+                    .eq('following_id', targetUser.id);
+                isFollowing = false;
+            } else {
+                await supabaseClient
+                    .from('followers')
+                    .insert({ follower_id: currentUser.id, following_id: targetUser.id });
+                isFollowing = true;
+            }
+
+            renderFollowButton();
+            loadStats();
+            btn.disabled = false;
+        }
+
+        function goToList(type) {
+            // Nanti diarahkan ke halaman list following/followers
+            window.location.href = `${type}.html?username=${targetUser.username}`;
+        }
+
+        async function logout() {
+            await supabaseClient.auth.signOut();
+            window.location.href = '/auth/auth.html';
+        }
+
+        init();
+    </script>
+</body>
+</html>
