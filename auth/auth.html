@@ -25,7 +25,7 @@
     </div>
 
     <script>
-        const supabase = supabase.createClient(window.SUPABASE_CONFIG.URL, window.SUPABASE_CONFIG.ANON_KEY);
+        const supabaseClient = supabase.createClient(window.SUPABASE_CONFIG.URL, window.SUPABASE_CONFIG.ANON_KEY);
         let isLogin = true;
 
         function toggleMode() {
@@ -38,19 +38,40 @@
         async function handleAuth() {
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
-            
+
+            if (!email || !password) {
+                alert("Email dan password wajib diisi.");
+                return;
+            }
+
+            const actionBtn = document.getElementById('actionBtn');
+            actionBtn.disabled = true;
+            actionBtn.innerText = "Memproses...";
+
             if (isLogin) {
-                const { error } = await supabase.auth.signInWithPassword({ email, password });
-                if (error) alert("Login Failed: " + error.message);
-                else window.location.href = '/ui/dashboard.html';
+                const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+                if (error) {
+                    alert("Login Failed: " + error.message);
+                    actionBtn.disabled = false;
+                    actionBtn.innerText = "Sign In";
+                } else {
+                    window.location.href = '/ui/dashboard.html';
+                }
             } else {
-                const { error } = await supabase.auth.signUp({ email, password });
+                const { error } = await supabaseClient.auth.signUp({ email, password });
                 if (error) {
                     alert("Registration Failed: " + error.message);
+                    actionBtn.disabled = false;
+                    actionBtn.innerText = "Register";
                 } else {
-                    const { error: loginError } = await supabase.auth.signInWithPassword({ email, password });
-                    if (loginError) alert("Auto-login failed: " + loginError.message);
-                    else window.location.href = '/ui/dashboard.html';
+                    const { error: loginError } = await supabaseClient.auth.signInWithPassword({ email, password });
+                    if (loginError) {
+                        alert("Auto-login failed: " + loginError.message);
+                        actionBtn.disabled = false;
+                        actionBtn.innerText = "Register";
+                    } else {
+                        window.location.href = '/ui/dashboard.html';
+                    }
                 }
             }
         }

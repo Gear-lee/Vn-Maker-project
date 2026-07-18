@@ -5,12 +5,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard | Plotio</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../config.js"></script>
 </head>
 <body class="bg-[#0b071e] text-white min-h-screen p-6 pb-24">
     <h1 class="text-3xl font-black mb-6">Dashboard</h1>
     <div class="bg-black/40 border border-white/10 p-6 rounded-3xl">
-        <p>Selamat datang kembali di Plotio!</p>
+        <p id="welcomeText">Memuat...</p>
     </div>
+
+    <script>
+        const supabaseClient = supabase.createClient(window.SUPABASE_CONFIG.URL, window.SUPABASE_CONFIG.ANON_KEY);
+
+        async function checkSession() {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (!session) {
+                window.location.href = '/auth/auth.html';
+                return;
+            }
+            document.getElementById('welcomeText').innerText = 'Selamat datang kembali, ' + session.user.email + '!';
+        }
+
+        checkSession();
+    </script>
 
     <!-- Panggil Navbar dari root -->
     <script src="../navbar.js"></script>
