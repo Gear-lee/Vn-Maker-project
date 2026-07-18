@@ -1,13 +1,51 @@
 document.addEventListener('DOMContentLoaded', function() {
-    const navbarHTML = `
-    <div class="fixed bottom-0 left-0 w-full bg-[#0b071e]/90 backdrop-blur-xl border-t border-white/5 p-3 flex justify-around items-center z-50">
-        <button onclick="window.location.href='/ui/explore.html'" class="text-slate-400 hover:text-white transition-all text-xs">Explore</button>
-        <button onclick="window.location.href='/ui/dashboard.html'" class="text-slate-400 hover:text-white transition-all text-xs">Project</button>
-        <button onclick="window.location.href='/ui/create.html'" class="mx-2 bg-gradient-to-r from-pink-600 to-purple-600 p-3 rounded-2xl text-white shadow-lg shadow-pink-500/20 active:scale-95 transition-all">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+    const currentPage = window.location.pathname.split('/').pop();
+
+    const navItems = [
+        {
+            label: 'Explore',
+            page: 'explore.html',
+            href: '/ui/explore.html',
+            icon: '<path d="M9 20l-5.447-2.724A1 1 0 0 1 3 16.382V5.618a1 1 0 0 1 1.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0 0 21 18.382V7.618a1 1 0 0 0-.553-.894L15 4m0 13V4m0 0L9 7"/>'
+        },
+        {
+            label: 'Project',
+            page: 'dashboard.html',
+            href: '/ui/dashboard.html',
+            icon: '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>'
+        },
+        {
+            label: 'Create',
+            page: 'create.html',
+            href: '/ui/create.html',
+            icon: '<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>'
+        },
+        {
+            label: 'Profile',
+            page: 'profile.html',
+            href: '/ui/profile.html',
+            icon: '<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>'
+        }
+    ];
+
+    const itemsHTML = navItems.map(item => {
+        const isActive = currentPage === item.page;
+        return `
+        <button onclick="window.location.href='${item.href}'" 
+            class="flex flex-col items-center justify-center gap-1 transition-all duration-200 ${isActive ? '' : 'text-slate-500 hover:text-slate-300'}">
+            <span class="flex items-center justify-center w-12 h-8 rounded-full transition-all duration-200 ${isActive ? 'bg-pink-500/15 text-pink-400' : ''}">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${item.icon}</svg>
+            </span>
+            <span class="text-[10px] font-medium tracking-wide ${isActive ? 'text-pink-400' : ''}">${item.label}</span>
         </button>
-        <button onclick="window.location.href='/ui/profile.html'" class="text-slate-400 hover:text-white transition-all text-xs">Profile</button>
+        `;
+    }).join('');
+
+    const navbarHTML = `
+    <div class="fixed bottom-0 left-0 w-full bg-[#0b071e]/95 backdrop-blur-xl border-t border-white/[0.06] px-4 pt-2 pb-3 flex justify-around items-center z-50">
+        ${itemsHTML}
     </div>
     `;
+
     document.body.insertAdjacentHTML('beforeend', navbarHTML);
 });
